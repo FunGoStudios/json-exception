@@ -2,9 +2,10 @@ require 'yajl'
 
 module Rack
   class JsonException
-    def initialize(app, logger = nil)
+    def initialize(app, logger = nil, &custom_log)
       @app = app
       @logger = logger
+      @custom_log = custom_log
     end
 
     def call(env)
@@ -27,6 +28,9 @@ module Rack
         :file => crash.backtrace[0].split(':')[0],
         :line => crash.backtrace[0].split(':')[1]
       }
+
+      exception_log = @custom_log.call(exception_log, env, crash) if @custom_log
+
       logger.write(Yajl::Encoder.encode(exception_log))
       logger.write("\n")
     end
